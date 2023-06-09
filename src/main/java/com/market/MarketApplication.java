@@ -13,9 +13,6 @@ public class MarketApplication {
 		SpringApplication.run(MarketApplication.class, args);
 	}
 
-	@GetMapping(value = "/")
-	public String HelloWorld(){
-		return "Hello World";
-	}
+
 
 }
