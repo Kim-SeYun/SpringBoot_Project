@@ -85,6 +85,16 @@ public class InquiryController {
         return "inquiry/detail";
     }
 
+    @PostMapping(value = "/modify")
+    public String modify(@ModelAttribute InquiryDto inquiryDto, @RequestParam Long inquiryId) {
+        Inquiry inquiry = inquiryService.getInquiryById(inquiryId);
+        inquiry.setTitle(inquiryDto.getTitle());
+        inquiry.setContent(inquiryDto.getContent());
+        inquiryService.update(inquiry);
+
+        return "redirect:/inquiry/list";
+    }
+
 
 
 }
