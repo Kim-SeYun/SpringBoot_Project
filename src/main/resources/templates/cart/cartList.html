@@ -14,9 +14,17 @@
     <script th:inline="javascript">
 
         $(document).ready(function(){
+
+            $("input[name=cartChkBox]").each(function() {
+                $(this).prop("checked", true); // 체크박스를 체크 상태로 변경
+            });
+
             $("input[name=cartChkBox]").change( function(){
                 getOrderTotalPrice();
             });
+
+            getOrderTotalPrice();
+
         });
 
         function getOrderTotalPrice(){
