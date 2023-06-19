@@ -4,10 +4,11 @@ import com.market.dto.ItemFormDto;
 import com.market.dto.ItemImgDto;
 import com.market.dto.ItemSearchDto;
 import com.market.dto.MainItemDto;
-import com.market.entity.Item;
-import com.market.entity.ItemImg;
+import com.market.entity.*;
+import com.market.repository.CartItemRepository;
 import com.market.repository.ItemImgRepository;
 import com.market.repository.ItemRepository;
+import com.market.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,8 @@ public class ItemService {
     private final ItemImgService itemImgService;
 
     private final ItemImgRepository itemImgRepository;
+
+    private final OrderItemRepository orderItemRepository;
 
     public Long saveItem(ItemFormDto itemFormDto, List<MultipartFile> itemImgFileList) throws Exception{
 
@@ -90,6 +93,19 @@ public class ItemService {
     @Transactional(readOnly = true)
     public Page<MainItemDto> getMainItemPage(ItemSearchDto itemSearchDto, Pageable pageable){
         return itemRepository.getMainItemPage(itemSearchDto, pageable);
+    }
+
+    public void deleteItem(Long itemId){
+        Item item = itemRepository.findById(itemId).orElseThrow(EntityNotFoundException::new);
+
+        List<OrderItem> orderItems = item.getOrderItems();
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrder(null);
+            orderItem.setItem(null);
+            orderItemRepository.save(orderItem);
+        }
+
+        itemRepository.delete(item);
     }
 
 }
