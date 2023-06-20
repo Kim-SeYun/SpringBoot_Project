@@ -105,6 +105,12 @@ public class ItemService {
             orderItemRepository.save(orderItem);
         }
 
+        List<ItemImg> itemImgs = item.getItemImages();
+        for (ItemImg itemImg : itemImgs) {
+            itemImg.setItem(null);
+            itemImgRepository.save(itemImg);
+        }
+
         itemRepository.delete(item);
     }
 

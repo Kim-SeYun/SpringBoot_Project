@@ -111,7 +111,6 @@ public class ItemController {
 
     @DeleteMapping(value = "/item/delete/{itemId}")
     public @ResponseBody ResponseEntity deleteItem(@PathVariable("itemId") Long itemId){
-        System.out.println("==================" +itemId);
 
         itemService.deleteItem(itemId);
         return new ResponseEntity<Long>(itemId, HttpStatus.OK);

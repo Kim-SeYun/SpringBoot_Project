@@ -41,7 +41,7 @@ public class Item extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private ItemSellStatus itemSellStatus; //상품 판매 상태
 
-    @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "item", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
     private List<ItemImg> itemImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE, orphanRemoval = true)
