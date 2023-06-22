@@ -33,7 +33,7 @@
                 dataType : "json",
                 success: function(result, status) {
                     alert('아이템이 성공적으로 삭제되었습니다.');
-                    location.reload();
+                    window.location.reload();
                 },
                 error: function(jqXHR, status, error) {
                     console.error('아이템 삭제에 실패했습니다:', error);

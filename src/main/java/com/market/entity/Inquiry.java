@@ -4,6 +4,7 @@ import com.market.constant.InquiryStatus;
 import com.market.constant.InquiryType;
 import com.market.constant.Role;
 import com.market.dto.InquiryDto;
+import com.market.dto.InquiryFormDto;
 import com.market.dto.MemberFormDto;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,13 +13,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name="inquiry")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"answer", "member"})
 public class Inquiry {
 
     @Id
@@ -30,6 +32,7 @@ public class Inquiry {
     private String title;
 
     @Lob
+    @Column(nullable = false)
     private String content;
 
     private String writer;
@@ -43,10 +46,10 @@ public class Inquiry {
     private InquiryStatus status;
 
     @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InquiryPhoto> photos;
+    private List<InquiryImg> imgs;
 
-    @OneToOne(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Answer answer;
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Answer> answers;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
@@ -58,7 +61,7 @@ public class Inquiry {
         inquiry.setContent(inquiryDto.getContent());
         inquiry.setWriter(inquiryDto.getWriter());
         inquiry.setInquiryType(inquiryDto.getInquiryType());
-        inquiry.setPhotos(inquiryDto.getPhotos());
+        inquiry.setImgs(inquiryDto.getImgs());
         inquiry.setRegDate(LocalDateTime.now());
         inquiry.setStatus(InquiryStatus.PENDING);
 
@@ -67,6 +70,11 @@ public class Inquiry {
         inquiry.setMember(member);
 
         return inquiry;
+    }
+
+    public void updateInquiry(InquiryFormDto inquiryFormDto){
+        this.title = inquiryFormDto.getTitle();
+        this.content = inquiryFormDto.getContent();
     }
 
 

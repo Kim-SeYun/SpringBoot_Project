@@ -64,6 +64,7 @@ public class OrderController {
         return "order/orderHist";
     }
 
+    // 주문취소
     @PostMapping("/order/{orderId}/cancel")
     public @ResponseBody ResponseEntity cancelOrder(@PathVariable("orderId") Long orderId, Principal principal){
         if(!orderService.validateOrder(orderId, principal.getName())){

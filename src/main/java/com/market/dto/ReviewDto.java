@@ -18,7 +18,7 @@ public class ReviewDto {
 
     private String writer;
 
-    private int rating;
+//    private int rating;
 
     private LocalDateTime reviewDate;
 }

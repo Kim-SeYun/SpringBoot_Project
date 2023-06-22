@@ -107,6 +107,95 @@
             });
         }
 
+        var photoCount = 1;
+        var maxPhotos = 5;
+
+        function addPhotoField() {
+            if (photoCount <= maxPhotos) {
+                var additionalPhotosDiv = document.getElementById("additional-photos");
+
+                var newPhotoField = document.createElement("div");
+                newPhotoField.classList.add("form-group");
+
+                var label = document.createElement("label");
+                label.textContent = "사진" + photoCount;
+
+                var input = document.createElement("input");
+                input.type = "file";
+                input.classList.add("form-control");
+                input.name = "photo" + photoCount;
+                input.multiple = true;
+
+                var deleteButton = document.createElement("button");
+                deleteButton.type = "button";
+                deleteButton.classList.add("btn", "btn-danger", "btn-sm");
+                deleteButton.textContent = "삭제";
+                deleteButton.addEventListener("click", function() {
+                    removePhotoField(newPhotoField);
+                });
+
+                newPhotoField.appendChild(label);
+                newPhotoField.appendChild(input);
+                newPhotoField.appendChild(deleteButton);
+
+                additionalPhotosDiv.appendChild(newPhotoField);
+
+                photoCount++;
+            } else {
+                alert("최대 " + maxPhotos + "장의 사진을 첨부할 수 있습니다.");
+            }
+        }
+
+        function removePhotoField(field) {
+            field.remove();
+            photoCount--;
+
+            var photoFields = document.querySelectorAll('#additional-photos .form-group');
+            for (var i = 0; i < photoFields.length; i++) {
+                var label = photoFields[i].querySelector('label');
+                label.textContent = '사진' + (i + 1);
+            }
+        }
+
+<!--        function addReview(event) {-->
+<!--          event.preventDefault();-->
+<!--          var itemId = document.getElementById("itemId").value;-->
+<!--          var content = document.getElementById("content").value;-->
+
+<!--          var csrfToken = $("meta[name='_csrf']").attr("content");-->
+<!--          var csrfHeader = $("meta[name='_csrf_header']").attr("content");-->
+
+<!--          var formData = new FormData();-->
+
+<!--          formData.append('itemId', itemId);-->
+<!--          formData.append('content', content);-->
+
+<!--          var photoFields = document.querySelectorAll('#additional-photos input[type="file"]');-->
+<!--          for (var i = 0; i < photoFields.length; i++) {-->
+<!--            var files = photoFields[i].files;-->
+<!--            for (var j = 0; j < files.length; j++) {-->
+<!--              formData.append('photos[]', files[j]);-->
+<!--            }-->
+<!--          }-->
+
+<!--          $.ajax({-->
+<!--            url: "/item/addReview?itemId=" + itemId,-->
+<!--            type: "POST",-->
+<!--            data: formData,-->
+<!--            processData: false,-->
+<!--            beforeSend: function(xhr) {-->
+<!--              xhr.setRequestHeader(csrfHeader, csrfToken);-->
+<!--            },-->
+<!--            success: function(response) {-->
+<!--              window.location.reload();-->
+<!--            },-->
+<!--            error: function(error) {-->
+<!--              console.log('실패');-->
+<!--            }-->
+<!--          });-->
+<!--        }-->
+
+
     </script>
 </th:block>
 
@@ -135,6 +224,7 @@
             height:auto;
             width:50%;
         }
+
     </style>
 </th:block>
 
@@ -195,6 +285,63 @@
   <div th:each="itemImg : ${item.itemImgDtoList}" class="text-center">
     <img th:if="${not #strings.isEmpty(itemImg.imgUrl)}" th:src="${itemImg.imgUrl}" class="rounded mgb-15" width="800">
   </div>
+
+<!--  <form th:action="@{/item/addReview}" method="post" enctype="multipart/form-data" th:object="${reviewFormDto}">-->
+    <input type="hidden" th:field="*{id}">
+  <div class="form-group">
+    <h5>리뷰 작성:</h5>
+<!--    <div id="stars">-->
+<!--      <span class="star" id="star-1">&#9734;</span>-->
+<!--      <span class="star" id="star-2">&#9734;</span>-->
+<!--      <span class="star" id="star-3">&#9734;</span>-->
+<!--      <span class="star" id="star-4">&#9734;</span>-->
+<!--      <span class="star" id="star-5">&#9734;</span>-->
+<!--    </div>-->
+    <textarea class="form-control" id="content" rows="2" style="white-space: pre-wrap;" th:field="*{content}"></textarea>
+    <div id="additional-photos">
+      <!-- 추가 사진 입력 필드가 동적으로 생성될 위치 -->
+    </div>
+    <div>
+      <button type="button" class="btn btn-secondary" onclick="addPhotoField()">사진 추가</button>
+    </div>
+    <div class="form-group">
+      <label for="writer">작성자</label>
+      <input type="text" class="form-control" id="writer" name="writer" th:value="${userId}" readonly>
+    </div>
+    <button type="button" class="btn btn-primary mt-2 float-right">답변 작성</button>
+  </div>
+<!--  </form>-->
+
+  <div>
+    <h5>답변:</h5>
+    <div th:if="${reviews}" th:each="review : ${reviews}">
+      <div class="card mb-2">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <small class="text-muted" th:text="${review.answerDate}"></small>
+            </div>
+            <div>
+              <button type="button" class="btn btn-link p-0" onclick="modReview(event)">수정</button>
+              <button type="button" class="btn btn-link p-0" onclick="deleteReview(event)">삭제</button>
+              <input type="hidden" th:value="${review.id}" id="reviewId" name="reviewId">
+              <input type="hidden" th:value="${review.content}" id="reviewContentById" name="reviewContentById">
+            </div>
+          </div>
+          <div>
+            <textarea id="reviewContent" name="reviewContent" th:text="${review.content}" style="width: 100%;" disabled></textarea>
+          </div>
+          <img th:src="${review.reviewImgDtoList[0].imgUrl}" class = "rounded repImg">
+
+        </div>
+      </div>
+    </div>
+    <div th:unless="${answers}">
+      <p>등록된 답변이 없습니다.</p>
+    </div>
+  </div>
+
+
 
 </div>
 

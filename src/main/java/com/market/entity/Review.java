@@ -6,6 +6,7 @@ import lombok.ToString;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "review")
@@ -25,8 +26,13 @@ public class Review extends BaseEntity{
 
     private String content;
 
-    private String wrtier;
+    private String writer;
 
-    private int rating;
+    private LocalDateTime reviewDate;
+
+//    private int rating;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewImg> reviewImages;
 
 }

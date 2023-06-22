@@ -9,13 +9,15 @@ import lombok.ToString;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name="member")
 @Getter
 @Setter
-@ToString
-public class Member extends BaseEntity{
+@ToString(exclude = "inquiry")
+public class Member {
 
     @Id
     @Column(name = "member_id")
@@ -47,7 +49,14 @@ public class Member extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private LocalDateTime regDate;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Inquiry> inquiries;
+
     public static Member createMember(MemberFormDto memberFormDto, PasswordEncoder passwordEncoder){
+
+        memberFormDto.setRegDate(LocalDateTime.now());
 
         Member member = new Member();
         member.setName(memberFormDto.getName());
@@ -59,6 +68,7 @@ public class Member extends BaseEntity{
         member.setBirthMonth(memberFormDto.getBirthMonth());
         member.setBirthDay(memberFormDto.getBirthDay());
         member.setGender(memberFormDto.getGender());
+        member.setRegDate(memberFormDto.getRegDate());
 
         String password = passwordEncoder.encode(memberFormDto.getPassword());
         member.setPassword(password);
