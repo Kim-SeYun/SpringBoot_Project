@@ -48,8 +48,4 @@ public class InquiryFormDto {
         return modelMapper.map(inquiry, InquiryFormDto.class);
     }
 
-    public List<InquiryImgDto> getInquiryImgDtoList() {
-        return inquiryImgDtoList;
-    }
-
 }
