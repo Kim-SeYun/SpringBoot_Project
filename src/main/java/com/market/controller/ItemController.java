@@ -2,11 +2,10 @@ package com.market.controller;
 
 import com.market.dto.ItemFormDto;
 import com.market.dto.ItemSearchDto;
-import com.market.dto.ReviewFormDto;
+import com.market.dto.ReviewDto;
+import com.market.entity.Answer;
 import com.market.entity.Item;
 import com.market.entity.Review;
-import com.market.entity.ReviewImg;
-import com.market.repository.ItemRepository;
 import com.market.service.ItemService;
 import com.market.service.ReviewImgService;
 import com.market.service.ReviewService;
@@ -14,20 +13,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.security.Principal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,11 +34,9 @@ public class ItemController {
 
     private final ItemService itemService;
 
-    private final ItemRepository itemRepository;
+    private final ReviewImgService reviewImgService;
 
     private final ReviewService reviewService;
-
-    private final ReviewImgService reviewImgService;
 
     @GetMapping(value = "/admin/item/new")
     public String itemForm(Model model) {
@@ -49,7 +44,6 @@ public class ItemController {
         return "/item/itemForm";
     }
 
-    // 상품등록
     @PostMapping(value = "/admin/item/new")
     public String itemNew(@Valid ItemFormDto itemFormDto, BindingResult bindingResult, Model model, @RequestParam("itemImgFile")List<MultipartFile> itemImgFileList){
 
@@ -88,7 +82,6 @@ public class ItemController {
     @PostMapping(value = "/admin/item/{itemId}")
     public String itemUpdate(@Valid ItemFormDto itemFormDto, BindingResult bindingResult, @RequestParam("itemImgFile") List<MultipartFile> itemImgFileList, Model model){
 
-        System.out.println("======================" + itemFormDto);
         if(bindingResult.hasErrors()){
             return "item/itemForm";
         }
@@ -121,44 +114,30 @@ public class ItemController {
     }
 
     @GetMapping(value = "/item/{itemId}")
-    public String itemDtl(Model model, @PathVariable("itemId") Long itemId){
+    public String itemDtl(Model model, @PathVariable("itemId") Long itemId, Principal principal){
+
+        boolean isLoggedIn = principal != null;
+
         ItemFormDto itemFormDto = itemService.getItemDtl(itemId);
+
+        int count = reviewService.getCountById(itemId);
+
+        if (count >= 1) {
+            List<Review> reviews = reviewService.getReviewById(itemId);
+            model.addAttribute("reviews", reviews);
+        }
+
         model.addAttribute("item", itemFormDto);
+
+        // 로그인 여부에 따라 다른 데이터 전달
+        if (isLoggedIn) {
+            String userId = principal.getName();
+            model.addAttribute("userId", userId);
+        }
+
+        model.addAttribute("reviewCount", count);
         return "item/itemDtl";
     }
-
-    @DeleteMapping(value = "/item/delete/{itemId}")
-    public @ResponseBody ResponseEntity deleteItem(@PathVariable("itemId") Long itemId){
-
-        itemService.deleteItem(itemId);
-        return new ResponseEntity<Long>(itemId, HttpStatus.OK);
-    }
-
-//    @PostMapping(value = "/item/addReview")
-//    public String addReview(@Valid @ModelAttribute("reviewFormDto")ReviewFormDto reviewFormDto,
-//                            BindingResult bindingResult,
-//                            Model model,
-//                            @RequestParam("reviewImgFile") List<MultipartFile> reviewImgFileList,
-//                            @RequestParam("itemId") Long itemId) {
-//
-//        if (bindingResult.hasErrors()) {
-//            return "item/itemDtl";
-//        }
-//
-//        if (reviewImgFileList.get(0).isEmpty() && reviewFormDto.getId() == null) {
-//            model.addAttribute("errorMessage", "첫번째 상품 이미지는 필수 값입니다.");
-//            return "item/itemDtl";
-//        }
-//
-//        try {
-//            reviewService.saveReview(reviewFormDto, reviewImgFileList, itemId);
-//        } catch (Exception e) {
-//            model.addAttribute("errorMessage", "상품 등록 중 에러가 발생하였습니다.");
-//            return "item/itemDtl";
-//        }
-//
-//        return "redirect:/";
-//    }
 
 
 }

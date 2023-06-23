@@ -52,7 +52,6 @@ public class InquiryController {
 
         int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
 
-        // 현재 페이지가 범위를 벗어나지 않도록 제한
         if (page < 1) {
             page = 1;
         } else if (page > totalPages) {
@@ -106,7 +105,10 @@ public class InquiryController {
 
     @GetMapping(value = "/{id}")
     public String getInquiry(@PathVariable("id") Long inquiryId, Model model, Principal principal) {
-        String username = principal.getName();
+        // 로그인 여부 확인
+        boolean isLoggedIn = principal != null;
+
+        // 문의 정보 조회
         InquiryFormDto inquiryFormDto = inquiryService.getInquiryById(inquiryId);
         int count = answerService.getCountById(inquiryId);
 
@@ -114,14 +116,16 @@ public class InquiryController {
             List<Answer> answers = answerService.getAnswerById(inquiryId);
             System.out.println(answers);
             model.addAttribute("answers", answers);
-
         }
 
         model.addAttribute("inquiryFormDto", inquiryFormDto);
-        model.addAttribute("username", username);
+        
+        if (isLoggedIn) {
+            String username = principal.getName();
+            model.addAttribute("username", username);
+        }
         return "inquiry/detail";
     }
-
 
     @PostMapping(value = "/modify/{id}")
     public String modify(@Valid InquiryFormDto inquiryFormDto, BindingResult bindingResult, @RequestParam("inquiryImgFile") List<MultipartFile> inquiryImgFileList, Model model) {
@@ -131,18 +135,13 @@ public class InquiryController {
             return "inquiry/detail";
         }
 
-        if(inquiryImgFileList.get(0).isEmpty() && inquiryFormDto.getId() == null){
-            model.addAttribute("errorMessage", "첫번째 상품 이미지는 필수 입력 값 입니다.");
-            return  "inquiry/detail";
-        }
-
         try {
             inquiryService.update(inquiryFormDto, inquiryImgFileList);
         }catch (Exception e){
-            model.addAttribute("errorMessage", "상품 수정 중 에러가 발생하였습니다.");
+            model.addAttribute("errorMessage", "문의글 수정 중 에러가 발생하였습니다.");
             return  "inquiry/detail";
         }
-        return "redirect:/";
+        return "redirect:/inquiry/" + inquiryFormDto.getId();
     }
 
     @DeleteMapping(value = "/delete/{id}")

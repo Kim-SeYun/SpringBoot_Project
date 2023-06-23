@@ -18,7 +18,41 @@
             $("#count").change( function(){
                 calculateToalPrice();
             });
+
+            $(document).on('click', '.preview-image', function() {
+              $(this).toggleClass('selected');
+            });
         });
+
+        function previewImages(event) {
+          var previewContainer = document.getElementById('preview-container');
+          previewContainer.innerHTML = ''; // 기존의 미리보기를 초기화
+
+          var files = event.target.files; // 선택된 파일들을 가져옴
+
+          for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+              var image = document.createElement('img');
+              image.setAttribute('src', e.target.result);
+              image.setAttribute('class', 'preview-image');
+              previewContainer.appendChild(image);
+            };
+
+            reader.readAsDataURL(file); // 파일을 읽어 데이터 URL로 변환
+          }
+        }
+
+        function removeSelectedPhoto() {
+            event.preventDefault();
+
+            var previewContainer = document.getElementById('preview-container');
+            previewContainer.innerHTML = ''; // 미리보기 컨테이너 초기화
+            var fileInput = document.getElementById('photos');
+            fileInput.value = ''; // 파일 선택 input 초기화
+        }
 
         function calculateToalPrice(){
             var count = $("#count").val();
@@ -107,94 +141,31 @@
             });
         }
 
-        var photoCount = 1;
-        var maxPhotos = 5;
+        function deleteComment(event) {
+          var csrfToken = $("meta[name='_csrf']").attr("content");
+          var csrfHeader = $("meta[name='_csrf_header']").attr("content");
 
-        function addPhotoField() {
-            if (photoCount <= maxPhotos) {
-                var additionalPhotosDiv = document.getElementById("additional-photos");
+          var commentId = event.target.parentNode.querySelector("input[name='commentId']").value;
 
-                var newPhotoField = document.createElement("div");
-                newPhotoField.classList.add("form-group");
-
-                var label = document.createElement("label");
-                label.textContent = "사진" + photoCount;
-
-                var input = document.createElement("input");
-                input.type = "file";
-                input.classList.add("form-control");
-                input.name = "photo" + photoCount;
-                input.multiple = true;
-
-                var deleteButton = document.createElement("button");
-                deleteButton.type = "button";
-                deleteButton.classList.add("btn", "btn-danger", "btn-sm");
-                deleteButton.textContent = "삭제";
-                deleteButton.addEventListener("click", function() {
-                    removePhotoField(newPhotoField);
-                });
-
-                newPhotoField.appendChild(label);
-                newPhotoField.appendChild(input);
-                newPhotoField.appendChild(deleteButton);
-
-                additionalPhotosDiv.appendChild(newPhotoField);
-
-                photoCount++;
-            } else {
-                alert("최대 " + maxPhotos + "장의 사진을 첨부할 수 있습니다.");
-            }
+          // 삭제 확인 메시지 표시
+          var confirmDelete = confirm("리뷰를 삭제하시겠습니까?");
+          if (confirmDelete) {
+            $.ajax({
+              url: "/review/delete/" + encodeURIComponent(parseInt(commentId)),
+              type: "DELETE",
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader(csrfHeader, csrfToken);
+              },
+              success: function(response) {
+                // 댓글 삭제 성공 시, 페이지 새로고침
+                window.location.reload();
+              },
+              error: function(error) {
+                console.log('실패');
+              }
+            });
+          }
         }
-
-        function removePhotoField(field) {
-            field.remove();
-            photoCount--;
-
-            var photoFields = document.querySelectorAll('#additional-photos .form-group');
-            for (var i = 0; i < photoFields.length; i++) {
-                var label = photoFields[i].querySelector('label');
-                label.textContent = '사진' + (i + 1);
-            }
-        }
-
-<!--        function addReview(event) {-->
-<!--          event.preventDefault();-->
-<!--          var itemId = document.getElementById("itemId").value;-->
-<!--          var content = document.getElementById("content").value;-->
-
-<!--          var csrfToken = $("meta[name='_csrf']").attr("content");-->
-<!--          var csrfHeader = $("meta[name='_csrf_header']").attr("content");-->
-
-<!--          var formData = new FormData();-->
-
-<!--          formData.append('itemId', itemId);-->
-<!--          formData.append('content', content);-->
-
-<!--          var photoFields = document.querySelectorAll('#additional-photos input[type="file"]');-->
-<!--          for (var i = 0; i < photoFields.length; i++) {-->
-<!--            var files = photoFields[i].files;-->
-<!--            for (var j = 0; j < files.length; j++) {-->
-<!--              formData.append('photos[]', files[j]);-->
-<!--            }-->
-<!--          }-->
-
-<!--          $.ajax({-->
-<!--            url: "/item/addReview?itemId=" + itemId,-->
-<!--            type: "POST",-->
-<!--            data: formData,-->
-<!--            processData: false,-->
-<!--            beforeSend: function(xhr) {-->
-<!--              xhr.setRequestHeader(csrfHeader, csrfToken);-->
-<!--            },-->
-<!--            success: function(response) {-->
-<!--              window.location.reload();-->
-<!--            },-->
-<!--            error: function(error) {-->
-<!--              console.log('실패');-->
-<!--            }-->
-<!--          });-->
-<!--        }-->
-
 
     </script>
 </th:block>
@@ -224,7 +195,62 @@
             height:auto;
             width:50%;
         }
+        .preview-image {
+          width: 100px;
+          height: 100px;
+          object-fit: cover;
+          margin-right: 5px;
+        }
+        .preview-image.selected {
+          border: 2px solid red;
+        }
+        .review-form {
+          display: grid;
+          gap: 10px;
+        }
 
+        .review-form label {
+          grid-column: 1;
+          font-weight: bold;
+        }
+
+        .review-form input,
+        .review-form textarea,
+        .review-form button {
+          grid-column: 2;
+          width: 100%;
+          padding: 5px;
+          border: 1px solid #ccc;
+          border-radius: 3px;
+        }
+
+        .review-form button[type="submit"] {
+          background-color: #4CAF50;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+        }
+
+        .review-form button[type="submit"]:hover {
+          background-color: #45a049;
+        }
+
+        .preview-image.selected {
+          width: auto;
+          height: auto;
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          margin: auto;
+          z-index: 9999;
+          background-color: rgba(0, 0, 0, 0.8);
+          cursor: zoom-out;
+        }
     </style>
 </th:block>
 
@@ -240,7 +266,7 @@
             <span th:if="${item.itemSellStatus == 'SELL'} ? '판매중' : '품절'" class="badge badge-primary mgb-15">
                 판매중
             </span>
-            <span th:unless="${item.itemSellStatus == 'SELL'} ? '판매중' : '품절'" class="badge btn-danger mgb-15" >
+      <span th:unless="${item.itemSellStatus == 'SELL'} ? '판매중' : '품절'" class="badge btn-danger mgb-15" >
                 품절
             </span>
       <div class="h4" th:text="${item.itemNm}"></div>
@@ -265,8 +291,8 @@
         <h3 name="totalPrice" id="totalPrice" class="font-weight-bold"></h3>
       </div>
       <div th:if="${item.itemSellStatus == 'SELL'} ? '판매중' : '품절'" class="text-right">
-        <button type="button" class="btn btn-light border border-primary btn-lg" onclick="addCart()">장바구니 담기</button>
-        <button type="button" class="btn btn-primary btn-lg" onclick="order()">주문하기</button>
+        <button type="button" class="btn btn-light border border-success btn-lg" onclick="addCart()">장바구니 담기</button>
+        <button type="button" class="btn btn-success btn-lg" onclick="order()">주문하기</button>
       </div>
       <div th:unless="${item.itemSellStatus == 'SELL'} ? '판매중' : '품절'" class="text-right">
         <button type="button" class="btn btn-danger btn-lg">품절</button>
@@ -286,57 +312,61 @@
     <img th:if="${not #strings.isEmpty(itemImg.imgUrl)}" th:src="${itemImg.imgUrl}" class="rounded mgb-15" width="800">
   </div>
 
-<!--  <form th:action="@{/item/addReview}" method="post" enctype="multipart/form-data" th:object="${reviewFormDto}">-->
-    <input type="hidden" th:field="*{id}">
-  <div class="form-group">
-    <h5>리뷰 작성:</h5>
-<!--    <div id="stars">-->
-<!--      <span class="star" id="star-1">&#9734;</span>-->
-<!--      <span class="star" id="star-2">&#9734;</span>-->
-<!--      <span class="star" id="star-3">&#9734;</span>-->
-<!--      <span class="star" id="star-4">&#9734;</span>-->
-<!--      <span class="star" id="star-5">&#9734;</span>-->
-<!--    </div>-->
-    <textarea class="form-control" id="content" rows="2" style="white-space: pre-wrap;" th:field="*{content}"></textarea>
-    <div id="additional-photos">
-      <!-- 추가 사진 입력 필드가 동적으로 생성될 위치 -->
-    </div>
-    <div>
-      <button type="button" class="btn btn-secondary" onclick="addPhotoField()">사진 추가</button>
-    </div>
-    <div class="form-group">
-      <label for="writer">작성자</label>
-      <input type="text" class="form-control" id="writer" name="writer" th:value="${userId}" readonly>
-    </div>
-    <button type="button" class="btn btn-primary mt-2 float-right">답변 작성</button>
+  <div class="review-form card mb-2">
+    <h2>리뷰작성</h2>
+    <form action="/item/reviews" method="post" enctype="multipart/form-data">
+      <div>
+        <label for="itemIdNum"></label>
+        <input type="hidden" id="itemIdNum" name="itemIdNum" th:value="${item.id}">
+      </div>
+      <div>
+        <label for="userId">아이디:</label>
+        <input type="text" id="userId" name="userId" th:value="${userId}" readonly>
+      </div>
+      <div>
+        <label for="content">리뷰 내용:</label>
+        <textarea id="content" name="content" required></textarea>
+      </div>
+      <div>
+        <label for="photos">사진 업로드:</label>
+        <input type="file" id="photos" name="photos" accept="image/*" multiple onchange="previewImages(event)">
+        <button type="button" onclick="removeSelectedPhoto()">사진 삭제</button>
+        <div id="preview-container"></div>
+      </div>
+      <button type="submit">리뷰 작성</button>
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    </form>
   </div>
-<!--  </form>-->
+
+  <br><br>
 
   <div>
-    <h5>답변:</h5>
-    <div th:if="${reviews}" th:each="review : ${reviews}">
+    <h5 th:text="'리뷰[' + ${reviewCount} + ']'"></h5>
+    <div th:if="${reviews}" th:each="comment : ${reviews}">
       <div class="card mb-2">
         <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <small class="text-muted" th:text="${review.answerDate}"></small>
-            </div>
-            <div>
-              <button type="button" class="btn btn-link p-0" onclick="modReview(event)">수정</button>
-              <button type="button" class="btn btn-link p-0" onclick="deleteReview(event)">삭제</button>
-              <input type="hidden" th:value="${review.id}" id="reviewId" name="reviewId">
-              <input type="hidden" th:value="${review.content}" id="reviewContentById" name="reviewContentById">
-            </div>
-          </div>
           <div>
-            <textarea id="reviewContent" name="reviewContent" th:text="${review.content}" style="width: 100%;" disabled></textarea>
+            <strong th:text="${comment.writer}"></strong>
+            <small class="text-muted" th:text="${comment.regDate}"></small>
           </div>
-          <img th:src="${review.reviewImgDtoList[0].imgUrl}" class = "rounded repImg">
 
+          <button type="button" class="btn btn-link p-0 float-right" id="deleteCommentBtn" name="deleteCommentBtn" th:if="${comment.writer == userId}" onclick="deleteComment(event)">삭제</button>
+          <input type="hidden" th:value="${comment.id}" id="commentId" name="commentId">
+          <input type="hidden" th:value="${comment.content}" id="commentContentById" name="commentContentById">
+
+          <textarea id="commentContent" name="commentContent" th:text="${comment.content}" style="width: 100%;" disabled></textarea>
+
+          <div class="row">
+            <div th:each="reviewImg : ${comment.imgs}" class="col-md-3 text-center">
+              <a href="#">
+                <img th:if="${not #strings.isEmpty(reviewImg.imgUrl)}" th:src="${reviewImg.imgUrl}" class="rounded mb-2 preview-image" style="margin-bottom: 10px;" width="100">
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div th:unless="${answers}">
+    <div th:unless="${reviews}">
       <p>등록된 답변이 없습니다.</p>
     </div>
   </div>
